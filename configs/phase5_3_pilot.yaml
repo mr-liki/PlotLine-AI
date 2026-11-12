@@ -1,0 +1,44 @@
+version: phase5.3-valid-supervision-pilot-v1
+model:
+  checkpoint: facebook/mask2former-swin-small-coco-instance
+  revision: 1b7ac418a0f3cb5edfc5037e488d53587b8bb76b
+  architecture: Mask2Former Swin-S
+  class_mapping: {0: longitudinal_solid, 1: longitudinal_dash}
+  preserve_pretrained_no_object_head_row: true
+data:
+  scope: six_user_attested_complete_visible_regions
+  source_resolution_native_units: 0.05
+  source_tile_size: 1024
+  crop_sizes_in_order: [512, 384, 256]
+  resize: false
+  unsupported_classes: [3, 6]
+  unsupported_exclusion_margin_pixels: 2
+  spatial_guard_native_units: 10
+loss:
+  criterion: ValidMask2FormerCriterion
+  max_points: 4096
+  point_selection: deterministic_stratified_foreground_background_population_weighted
+  output_sampling: nearest_native_to_prediction_grid
+  weights: {class: 2, bce: 5, dice: 5}
+  auxiliary_losses: all_decoder_stages_with_same_validity_policy
+  unmatched_query_policy: no_object_only_when_entire_crop_is_valid
+training:
+  optimizer: AdamW
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  micro_batch_size: 1
+  gradient_accumulation: 1
+  max_optimizer_steps: 8
+  maximum_attempt_seconds: 900
+  gradient_clip_norm: 1
+  mixed_precision: fp16
+  gradient_checkpointing: if_supported
+  backbone_freezing: only_if_native_size_fallbacks_fail
+  dataloader_workers: 0
+  random_seed: 895
+evaluation:
+  confidence_threshold: 0.25
+  mask_threshold: 0.5
+  held_out_crops: 1
+  independent_test_set: false
+  status_after_success: TRAINED_PROVISIONAL

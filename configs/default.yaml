@@ -1,0 +1,122 @@
+# Main pipeline configuration.
+# Values marked `provisional: true` (or listed under `provisional_keys`) MUST be reviewed
+# after inspecting real client point clouds (Phase 2: LiDAR inspection).
+# Other config files are referenced relative to this file.
+
+project:
+  name: AI Road Marking Digitization
+  seed: 42
+
+includes:
+  paths: paths.yaml
+  model: model.yaml
+  classes: classes.yaml
+  gis_schema: gis_schema.yaml
+
+runtime:
+  device: cuda:0            # "cuda:0" | "cpu"; overridable via ROADMARKING_DEVICE
+  require_gpu: true         # fail loudly instead of silently falling back to CPU
+  num_workers: 4
+  mixed_precision: fp16     # fp16 | bf16 | none (RTX 3050 / Ampere supports both)
+
+crs:
+  # No EPSG code is assumed. The source CRS is read from LAS/LAZ headers (VLR/WKT).
+  source_epsg: null         # set only if headers lack CRS information
+  output_epsg: null         # null => keep source CRS
+  vertical_datum: null      # to be confirmed with the client
+  provisional: true
+
+pointcloud:
+  # Reading / preprocessing parameters (Stage 1-2). All provisional.
+  chunk_size: 5000000              # points per chunk when streaming large files
+  ground_classification_codes: [2] # ASPRS ground class; verify client classification usage
+  intensity:
+    normalization: percentile      # percentile | minmax | none
+    percentile_low: 1.0
+    percentile_high: 99.0
+  noise_removal:
+    method: statistical
+    mean_k: 8
+    std_multiplier: 2.5
+  provisional: true
+
+rasterization:
+  # Phase 3: fixed 5 cm from Phase 2 density measurements; native units unconfirmed.
+  ground_sampling_distance_m: 0.05 # fixed resolution, no interpolation upsampling
+  adaptive_resolution: false
+  aggregation: max                 # per-pixel intensity aggregation: max | mean | median
+  fill_holes: false
+  nodata_value: -9999
+  provisional: true
+
+tiling:
+  tile_size_px: 1024
+  tile_overlap_px: 256
+  provisional: true
+
+inference:
+  batch_size: 1                    # RTX 3050 has 6 GB VRAM; tune after profiling
+  score_threshold: 0.5
+  mask_threshold: 0.5
+  overlap_mask_area_threshold: 0.8
+  provisional: true
+
+postprocessing:
+  min_instance_area_px: 50
+  tile_merge_iou_threshold: 0.5
+  provisional: true
+
+vectorization:
+  line_simplify_tolerance_m: 0.01
+  polygon_simplify_tolerance_m: 0.005
+  min_line_length_m: 0.3
+  provisional: true
+
+reconstruction_3d:
+  z_search_radius_m: 0.25
+  z_aggregation: median
+  provisional: true
+
+logging:
+  level: INFO
+  json: false
+  file: logs/roadmarking.log
+
+# Phase 3 processing: geometrically uncertain candidates stay explicitly labeled.
+phase3:
+  configuration_version: phase3-v1
+  chunk_size: 250000
+  max_partition_bytes: 268435456
+  gap_fill: false
+  intensity_percentiles:
+    low: 1.0
+    high: 99.5
+  road_surface:
+    cell_m: 1.0
+    min_points: 8
+    max_rms_m: 0.045
+    max_slope: 0.20
+    max_neighbor_step_m: 0.20
+    point_residual_m: 0.10
+    min_component_m2: 100.0
+    max_grid_cells: 8000000
+
+# Phase 3.1 corridor refinement (road_method "v2"); see
+# docs/phase3_1_road_corridor_correction.md. Phase 3 (v1) settings above are unchanged.
+phase3_1:
+  refinement:
+    core_min_area_m2: 500.0
+    corridor_min_elongation: 3.0
+    corridor_max_mean_width_m: 40.0   # upper bound on mean corridor width, not a road width
+    edge_buffer_cells: 2
+    inlier_band_m: 0.06
+    edge_min_inliers: 8
+    enclosed_min_inliers: 3
+    enclosed_min_core_neighbors: 5
+    edge_max_rms_m: 0.03
+    max_slope_change: 0.06
+    max_offset_m: 0.04
+    continuity_step_m: 0.05
+    parallel_search_cells: 30
+    include_uncertain: false
+

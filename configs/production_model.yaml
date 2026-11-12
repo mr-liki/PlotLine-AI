@@ -1,0 +1,36 @@
+# Production road-marking model registry (single source of truth for the default model).
+# Load via roadmarking.models.production.load_production_model(), which verifies SHA-256
+# before loading. To roll back, set `active: v1_frozen_step0600` (no other change needed).
+active: v2_realistic_v1_fix_step0500
+
+models:
+  v2_realistic_v1_fix_step0500:
+    weights: models/mask2former_swin_s/production/v2_realistic_v1_fix_step0500/model
+    weights_sha256: 91d6bef5ec6d34ef1769bd189a05e864fc686abd64cb2dbce65e4763b6e91644
+    config_sha256: fbb5a1b339f3c747b852610c65d41df8f380833ddcd71f396b731dcdbd4e24e6
+    processor: models/mask2former_swin_s/production/v2_realistic_v1_fix_step0500/processor
+    processor_sha256: 578afe60a7ee76b22064e3a7f996fdb91e495fd506830ee8b8ec2c494e459ea2
+    classes: {0: longitudinal_solid, 1: longitudinal_dash}
+    thresholds_v1: {"0": 0.7942133844789083, "1": 0.8853076199037311}
+    postprocessing: per-crop class-wise NMS 0.3, mask quality 0, V1 thresholds; clip to observed support; roadmarking.inference.stitching (unchanged)
+    promoted_utc: "2026-11-12"
+    approved_by: user (explicit instruction "Yes, make it default")
+    evidence:
+      acceptance_set: data/processed/acceptance_v1/20261112T163156211334Z
+      acceptance_decision: ACCEPTED (all registered gates; deep raw NoData report-only by user decision)
+      v1_f1: {solid: 0.923, dash: 0.905}
+      baseline_v1_f1: {solid: 0.794, dash: 0.846}
+    limitations:
+      - two classes only (solid, dash); arrows, text and crossings are not recognised
+      - acceptance set mostly RIGHT carriageway (50/56 crops); LEFT and interchange thin
+      - same July-2025 survey campaign as training data (different locations)
+  v1_frozen_step0600:
+    weights: models/mask2former_swin_s/final_candidate/checkpoint_step0600/model
+    weights_sha256: ab8835653da7d91c94edd0b3fc2c4a0043c5f0eef92bf2536dba4da205e21906
+    config_sha256: fbb5a1b339f3c747b852610c65d41df8f380833ddcd71f396b731dcdbd4e24e6
+    processor: models/mask2former_swin_s/final_candidate/checkpoint_step0600/processor
+    processor_sha256: 578afe60a7ee76b22064e3a7f996fdb91e495fd506830ee8b8ec2c494e459ea2
+    classes: {0: longitudinal_solid, 1: longitudinal_dash}
+    thresholds_v1: {"0": 0.7942133844789083, "1": 0.8853076199037311}
+    postprocessing: same as v2
+    status: previous default, preserved for rollback

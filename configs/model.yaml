@@ -1,0 +1,38 @@
+# Mask2Former Swin-S instance segmentation (Hugging Face Transformers).
+model:
+  architecture: Mask2FormerForUniversalSegmentation
+  checkpoint: facebook/mask2former-swin-small-coco-instance
+  # Pin a specific Hub commit for reproducibility once weights are approved and downloaded.
+  revision: main
+  task: instance
+  # Phase 1: keep the checkpoint's original COCO instance head (80 classes).
+  # The road-marking head is configured in the fine-tuning phase from classes.yaml.
+  use_custom_classes: false
+  ignore_mismatched_sizes: false
+  # Default fine-tuned road-marking model (2026-11-12). The authoritative, hash-verified
+  # definition is configs/production_model.yaml; load it with
+  # roadmarking.models.production.load_production_model().
+  local_checkpoint: models/mask2former_swin_s/production/v2_realistic_v1_fix_step0500/model
+
+license:
+  # The Hub model card lists license "other". Verify the license of the pretrained
+  # weights and obtain commercial-use permission before any production deployment.
+  hub_license_tag: other
+  verified_for_commercial_use: false
+
+image_processor:
+  # Defaults come from the checkpoint's preprocessor_config.json.
+  # Intensity rasters are single-channel; they will be replicated to 3 channels
+  # (decision to be revisited during fine-tuning).
+  input_channels: 3
+  do_resize: true
+  provisional: true
+
+training:
+  # Placeholders for Phase 5 (fine-tuning). Not used in Phase 1.
+  epochs: null
+  learning_rate: null
+  weight_decay: null
+  batch_size: null
+  gradient_accumulation_steps: null
+  provisional: true

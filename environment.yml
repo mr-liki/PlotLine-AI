@@ -1,0 +1,57 @@
+﻿# Conda environment for AI Road Marking Digitization.
+# Compiled geospatial / LiDAR libraries come from conda-forge (single consistent
+# GDAL/PROJ/GEOS stack). PyTorch and the ML stack are installed afterwards with pip
+# from requirements-ml.txt (official CUDA wheels from download.pytorch.org).
+#
+#   micromamba create -f environment.yml
+#   micromamba run -n roadmarking-ai python -m pip install -r requirements-ml.txt
+#   micromamba run -n roadmarking-ai python -m pip install -e . --no-deps
+name: roadmarking-ai
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - pip
+  # Core
+  # BLAS/LAPACK must be OpenBLAS, not MKL: conda-forge MKL uses LLVM OpenMP (libomp.dll),
+  # PyTorch's wheel bundles Intel OpenMP (libiomp5md.dll); with both in one process,
+  # torch + numpy/scipy linear algebra aborts (OMP: Error #15 / shm.dll WinError 127).
+  - libblas=*=*openblas
+  - libcblas=*=*openblas
+  - liblapack=*=*openblas
+  - numpy
+  - scipy
+  - pandas
+  - pillow
+  - pyyaml
+  - tqdm
+  - psutil
+  - packaging
+  - python-dotenv
+  # Computer vision (compiled)
+  - scikit-image
+  - pycocotools
+  # Must come from conda-forge, built against the same libarrow as GDAL's Parquet driver.
+  # A pip pyarrow wheel ships its own Arrow DLLs and causes "Entry Point Not Found"
+  # (parquet.dll) crashes on Windows.
+  - pyarrow
+  # LiDAR
+  - pdal
+  - python-pdal
+  - laspy
+  - lazrs-python
+  # GIS
+  - gdal
+  - rasterio
+  - geopandas
+  - shapely
+  - pyproj
+  - pyogrio
+  - affine
+  # Dev tools
+  - pytest
+  - pytest-cov
+  - ruff
+  - black
+  - ipykernel

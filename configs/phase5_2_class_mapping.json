@@ -1,0 +1,16 @@
+{
+  "version": "phase5.2-approved-outline-export-v1",
+  "parent_taxonomy": "phase4-verified-taxonomy-v1",
+  "confirmed_training_mapping": {"1": 0, "2": 1},
+  "classes": [
+    {"visual_id": 1, "name": "longitudinal_solid", "training_id": 0, "status": "EXISTING_CONFIRMED_VISUAL_CLASS", "definition": "One connected solid longitudinal painted footprint"},
+    {"visual_id": 2, "name": "longitudinal_dash", "training_id": 1, "status": "EXISTING_CONFIRMED_VISUAL_CLASS", "definition": "One physically separated longitudinal painted dash"},
+    {"visual_id": 3, "name": "arrow", "training_id": null, "status": "EXISTING_CLIENT_CODE_HINT_NOT_PROMOTED_TO_TRAINING_CLASS", "definition": "Original approved symbol footprint with an existing arrow code hint; original holes preserved"},
+    {"visual_id": 6, "name": "give_way", "training_id": null, "status": "EXISTING_CLIENT_CODE_HINT_NOT_PROMOTED_TO_TRAINING_CLASS", "definition": "Original approved symbol footprint with an existing give-way code hint; original holes preserved"}
+  ],
+  "client_code_candidates": {"M15": 3, "M15a": 3, "M15b": 3, "M15c": 3, "M15d": 3, "M15e": 3, "M15f": 3, "M9a": 6},
+  "background_id": 0,
+  "unknown_semantic_id": 255,
+  "instance_id_zero": "NO_INSTANCE_NOT_A_MODEL_CLASS",
+  "notes": "Visual IDs and model IDs remain separate. No training class is enabled by outline approval alone. Symbol code hints retain their prior provisional status."
+}

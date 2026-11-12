@@ -1,0 +1,81 @@
+# Road-marking taxonomy.
+#
+# Two layers are kept deliberately separate:
+#   1. `model_classes`   - what the neural network predicts from intensity images.
+#   2. `gis_designations` - final client classifications written to the GeoPackage.
+# Many final designations cannot be recognised from pixels alone (they need
+# measurements, road context, or catalog rules). The `mapping` section says which
+# model classes feed each designation and which rule family resolves it.
+# Rules are NOT implemented in Phase 1.
+#
+# STATUS: PROVISIONAL. The model class list must be confirmed after reviewing the
+# client annotations and specification catalog. Code descriptions marked
+# `to_confirm` must be checked against the client's catalog.
+
+version: 0.1.0
+provisional: true
+
+model_classes:
+  # id 0 is reserved for background by our dataset conversion (not a Mask2Former class).
+  - {id: 1, name: longitudinal_solid,   geometry: line,    description: Continuous longitudinal paint}
+  - {id: 2, name: longitudinal_dash,    geometry: line,    description: Single dash segment of a broken line}
+  - {id: 3, name: arrow,                geometry: polygon, description: Directional / selection arrow}
+  - {id: 4, name: detour_arrow,         geometry: polygon, description: Detour / lane-change arrow}
+  - {id: 5, name: diagonal_stripe,      geometry: polygon, description: Single stripe of a hatched area}
+  - {id: 6, name: give_way,             geometry: polygon, description: Give-way marking element}
+  - {id: 7, name: colour_band,          geometry: polygon, description: Colour band}
+  - {id: 8, name: safety_marking,       geometry: polygon, description: Other safety marking}
+  - {id: 9, name: character,            geometry: polygon, description: Single letter or digit of an inscription}
+
+longitudinal_designations:
+  # 14 designation types from the client specification (DESIGNACAO).
+  - {code: 1,  name: Solid line,                         model_classes: [longitudinal_solid],                    rules: []}
+  - {code: 2,  name: Broken line,                        model_classes: [longitudinal_dash],                     rules: [dash_pattern]}
+  - {code: 3,  name: Warning broken line,                model_classes: [longitudinal_dash],                     rules: [dash_pattern]}
+  - {code: 4,  name: Solid and broken line,              model_classes: [longitudinal_solid, longitudinal_dash], rules: [parallel_pairing]}
+  - {code: 5,  name: Warning solid and broken line,      model_classes: [longitudinal_solid, longitudinal_dash], rules: [parallel_pairing, dash_pattern]}
+  - {code: 6,  name: Deceleration line,                  model_classes: [longitudinal_dash, longitudinal_solid], rules: [road_context, width_measurement]}
+  - {code: 7,  name: Acceleration line,                  model_classes: [longitudinal_dash, longitudinal_solid], rules: [road_context, width_measurement]}
+  - {code: 8,  name: Intersection line,                  model_classes: [longitudinal_dash, longitudinal_solid], rules: [road_context]}
+  - {code: 9,  name: Solid line after LBTg,              model_classes: [longitudinal_solid],                    rules: [road_context, sequence_context]}
+  - {code: 10, name: Broken line of traffic lane,        model_classes: [longitudinal_dash],                     rules: [dash_pattern, road_context]}
+  - {code: 11, name: Slow lane line - route,             model_classes: [longitudinal_dash, longitudinal_solid], rules: [road_context, width_measurement]}
+  - {code: 12, name: Slow lane line - entrance and exit, model_classes: [longitudinal_dash, longitudinal_solid], rules: [road_context, width_measurement]}
+  - {code: 13, name: Right edge line,                    model_classes: [longitudinal_solid, longitudinal_dash], rules: [road_relative_position]}
+  - {code: 14, name: Left edge line,                     model_classes: [longitudinal_solid, longitudinal_dash], rules: [road_relative_position]}
+
+other_mark_codes:
+  # COD_RST codes from the client specification. Category hints are provisional and
+  # must be confirmed against the client catalog (to_confirm: true).
+  - {code: M15,  category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15a, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15b, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15c, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15d, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15e, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M15f, category_hint: arrow,          model_classes: [arrow],           to_confirm: true}
+  - {code: M16,  category_hint: detour_arrow,   model_classes: [detour_arrow],    to_confirm: true}
+  - {code: M16a, category_hint: detour_arrow,   model_classes: [detour_arrow],    to_confirm: true}
+  - {code: M16b, category_hint: detour_arrow,   model_classes: [detour_arrow],    to_confirm: true}
+  - {code: M17,  category_hint: diagonal_stripe, model_classes: [diagonal_stripe], to_confirm: true}
+  - {code: M17a, category_hint: diagonal_stripe, model_classes: [diagonal_stripe], to_confirm: true}
+  - {code: M9a,  category_hint: give_way,       model_classes: [give_way],        to_confirm: true}
+  - {code: M20,  category_hint: colour_band,    model_classes: [colour_band],     to_confirm: true}
+  - {code: M21,  category_hint: safety_marking, model_classes: [safety_marking],  to_confirm: true}
+
+inscriptions:
+  # Road inscriptions: each letter/digit is an individual polygon (LETRA / ALGARISMO),
+  # grouped into words/numbers via ID_GRUPO.
+  model_classes: [character]
+  rules: [character_recognition, inscription_grouping]
+
+rule_families:
+  # Declared only; implemented in Phase 7 (GIS classification).
+  dash_pattern: Measure dash length (TRAÇO) and gap (ESPAÇO) along a grouped broken line
+  parallel_pairing: Detect adjacent parallel solid/broken lines forming a combined marking
+  road_context: Use road topology (ramps, junctions, lanes) to resolve the designation
+  sequence_context: Use the preceding/following marking along the carriageway
+  width_measurement: Measure painted width (LARGURA)
+  road_relative_position: Determine position relative to the carriageway (POSICAO)
+  character_recognition: Identify which letter/digit a character instance represents
+  inscription_grouping: Group characters into a single inscription

@@ -1,0 +1,23 @@
+# Deep-learning stack installed with pip on top of the conda environment.
+# PyTorch CUDA 13.0 wheels from the official PyTorch index (driver must support CUDA >= 13.0).
+# numpy / scipy / pillow / pycocotools come from conda-forge and must not be replaced by pip:
+#   python -m pip install -r requirements-ml.txt -c constraints-conda.txt
+--extra-index-url https://download.pytorch.org/whl/cu130
+
+torch==2.14.1+cu130
+torchvision==0.29.1+cu130
+
+transformers==5.22.1
+accelerate==1.15.0
+safetensors
+huggingface_hub
+timm==1.0.31
+einops
+
+opencv-python-headless
+albumentations==2.0.8
+
+# datasets 5.1+ needs pyarrow>=24; conda GDAL 3.12 is built against Arrow 23 (pyarrow from conda).
+datasets==5.0.1
+torchmetrics==1.9.0
+tensorboard

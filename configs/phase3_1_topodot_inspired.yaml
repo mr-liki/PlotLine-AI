@@ -1,0 +1,28 @@
+# All distances are provisional native coordinate units; no CRS is assigned.
+stripe:
+  neighborhood_m: 2.0
+  contrast_floor: 0.035
+  contrast_sigma: 0.8
+  segment_window_m: 12.0
+  min_length_m: 1.5
+  max_width_m: 0.8
+  min_elongation: 4.0
+  max_gap_m: 5.0
+  max_turn_degrees: 20.0
+  min_gap_observed_fraction: 0.6
+sections:
+  spacing_m: 1.0
+  half_width_m: 30.0
+  along_half_length_m: 0.6
+  bin_m: 0.25
+  min_bin_points: 3
+  noise_floor_m: 0.01
+  noise_cap_m: 0.04
+  max_step_m: 0.15
+  max_slope: 0.30
+  max_slope_change: 0.12
+  max_station_width_change_m: 1.5
+discovery_resolution: 0.20
+pilot_halo_m: 30.0
+partition_m: 64.0
+chunk_size: 1000000

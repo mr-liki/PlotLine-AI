@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "roadmarking"
+version = "0.1.0"
+description = "AI Road Marking Digitization: Mask2Former-based detection and 3D vectorization of road markings from aerial LiDAR."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = { text = "Proprietary" }
+# Runtime dependencies are managed by environment.yml (conda-forge) and
+# requirements-ml.txt (pip, CUDA wheels). Install this package with `--no-deps`.
+dependencies = []
+
+[project.scripts]
+roadmarking-healthcheck = "roadmarking.healthcheck:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+roadmarking = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]  # Portuguese attribute names contain non-ASCII characters
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "gpu: requires a CUDA-capable GPU",
+    "network: requires network access / model download",
+]
+
+[tool.coverage.run]
+source = ["roadmarking"]
+branch = true

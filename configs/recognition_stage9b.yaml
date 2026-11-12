@@ -1,0 +1,29 @@
+version: recognition-stage9b-v1
+status: DRAFT_REVIEW_REQUIRED_NO_TRAINING
+architecture: mask2former_swin_small
+foreground_classes:
+  - {model_id: 0, name: longitudinal_solid, visual_id: 1}
+  - {model_id: 1, name: longitudinal_dash, visual_id: 2}
+  - {model_id: 2, name: road_text, visual_id: 9}
+no_object_logit_index: 3
+legacy_checkpoints:
+  foreground_classes: [longitudinal_solid, longitudinal_dash]
+  no_object_logit_index: 2
+  modify_or_relabel: false
+road_text_instances:
+  unit: individual_character_when_reliably_separable
+  word_group_field: text_group_id
+  character_value: human_confirmed_or_null
+  client_identity: authoritative_source_or_null
+  unresolved_separation: group_fragment_review_only_not_character_ground_truth
+  paint_support: observed_native_pixels_only
+  preserves_holes_and_nodata: true
+  automatic_ocr_claim: false
+unsupported_symbols: exclude_until_separate_approved_plan
+supervision:
+  unconfirmed_text: ignore_not_background
+  uncertainty: ignore
+  nodata: ignore
+  complete_visible_target_review_required: true
+training_enabled: false
+protected_test_execution_enabled: false

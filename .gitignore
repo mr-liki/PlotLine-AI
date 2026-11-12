@@ -1,0 +1,73 @@
+# --- Client data (confidential, never commit) ---
+data/**
+!data/**/
+!data/**/.gitkeep
+
+# --- Model weights and checkpoints ---
+checkpoints/**
+!checkpoints/.gitkeep
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+
+# --- Outputs and logs ---
+outputs/**
+!outputs/**/
+!outputs/**/.gitkeep
+logs/**
+!logs/.gitkeep
+runs/
+
+# --- Large geodata / rasters ---
+*.las
+*.laz
+*.copc.laz
+*.tif
+*.tiff
+*.gpkg
+*.gpkg-*
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.vrt
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# --- Hugging Face local cache (if redirected into the project) ---
+.hf_cache/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# --- Local experiment state (never publish) ---
+models/**
+.black-cache/
+.p*/
+.phase*/
+research_notes/
+reports/
+outputs/pytest*/

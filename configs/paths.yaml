@@ -1,0 +1,24 @@
+# All paths are relative to `root`. `root: null` means the project root.
+# Override the root with the ROADMARKING_DATA_ROOT environment variable to keep
+# large client data on a separate drive. No absolute paths are hardcoded here.
+root: null
+
+data:
+  raw_pointclouds: data/raw/pointclouds
+  raw_annotations: data/raw/annotations
+  reference_gis: data/raw/reference_gis
+  interim: data/interim
+  processed: data/processed
+  training: data/training
+  validation: data/validation
+  test: data/test
+
+checkpoints: checkpoints
+
+outputs:
+  masks: outputs/masks
+  vectors: outputs/vectors
+  gpkg: outputs/gpkg
+  reports: outputs/reports
+
+logs: logs

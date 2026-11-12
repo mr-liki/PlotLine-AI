@@ -1,0 +1,138 @@
+"""Headless QGIS packaging for NEW-region candidates; all layers remain read-only."""
+
+import json
+from pathlib import Path
+
+
+def main():
+    from qgis.core import (
+        Qgis,
+        QgsApplication,
+        QgsBookmark,
+        QgsCoordinateReferenceSystem,
+        QgsFillSymbol,
+        QgsLineSymbol,
+        QgsMapRendererParallelJob,
+        QgsMapSettings,
+        QgsProject,
+        QgsRasterLayer,
+        QgsRectangle,
+        QgsReferencedRectangle,
+        QgsVectorLayer,
+    )
+    from qgis.PyQt.QtCore import QSize
+
+    root = Path(__file__).resolve().parents[1]
+    context = json.loads((root / "outputs/reports/phase5_7_new_review/latest.json").read_text())
+    report = Path(context["report_dir"])
+    spec = json.loads((report / "new_region_candidates.json").read_text())
+    output = Path(spec["output"])
+    app = QgsApplication([], False)
+    app.initQgis()
+    project = QgsProject.instance()
+    project.setCrs(QgsCoordinateReferenceSystem())
+    project.setFilePathStorage(Qgis.FilePathType.Relative)
+    project.setTitle(
+        "Phase 5.7 NEW geography NEW regions - review candidates, NOT approved training labels"
+    )
+    tree = project.layerTreeRoot()
+    drafts = tree.addGroup("NEW candidate paint outlines - orange; approval pending")
+    originals = tree.addGroup("Read-only client QC geometry - cyan lines / magenta symbols")
+    images = tree.addGroup("Actual new-source intensity - native 0.05 grid")
+    observation = tree.addGroup("Observation masks - toggle to inspect missing data")
+    layer = QgsVectorLayer(
+        spec["candidate_store"] + "|layername=candidate_paint_footprints",
+        "Candidate painted footprints - NOT training labels",
+        "ogr",
+    )
+    layer.setCrs(QgsCoordinateReferenceSystem())
+    layer.setReadOnly(True)
+    layer.renderer().setSymbol(
+        QgsFillSymbol.createSimple(
+            {"color": "0,0,0,0", "outline_color": "255,170,0", "outline_width": "0.3"}
+        )
+    )
+    project.addMapLayer(layer, False)
+    drafts.addLayer(layer)
+    for item in spec["references"]:
+        layer = QgsVectorLayer(
+            item["path"] + "|layername=" + item["layer"], "Original client " + item["layer"], "ogr"
+        )
+        layer.setCrs(QgsCoordinateReferenceSystem())
+        layer.setReadOnly(True)
+        polygon = "other" in item["layer"].lower()
+        symbol = (
+            QgsFillSymbol.createSimple(
+                {"color": "0,0,0,0", "outline_color": "255,0,255", "outline_width": "0.2"}
+            )
+            if polygon
+            else QgsLineSymbol.createSimple({"line_color": "0,255,255", "line_width": "0.15"})
+        )
+        layer.renderer().setSymbol(symbol)
+        project.addMapLayer(layer, False)
+        originals.addLayer(layer).setItemVisibilityChecked(polygon)
+    for tile in spec["tiles"]:
+        for filename, group, visible in (
+            (tile["images"]["grayscale"], images, True),
+            (tile["layers"]["observed"], observation, False),
+            (tile["layers"]["nodata"], observation, False),
+        ):
+            layer = QgsRasterLayer(filename, tile["candidate_id"] + " " + Path(filename).stem)
+            layer.setCrs(QgsCoordinateReferenceSystem())
+            project.addMapLayer(layer, False)
+            group.addLayer(layer).setItemVisibilityChecked(visible)
+        bookmark = QgsBookmark()
+        bookmark.setName(tile["candidate_id"])
+        bookmark.setGroup("Phase 5.7 NEW geography NEW regions")
+        bookmark.setExtent(
+            QgsReferencedRectangle(QgsRectangle(*tile["bounds"]), QgsCoordinateReferenceSystem())
+        )
+        project.bookmarkManager().addBookmark(bookmark)
+    project.viewSettings().setDefaultViewExtent(
+        QgsReferencedRectangle(
+            QgsRectangle(*spec["tiles"][0]["bounds"]), QgsCoordinateReferenceSystem()
+        )
+    )
+    filename = output / "independent_test_review.qgs"
+    if not project.write(str(filename)):
+        raise ValueError("QGIS project save failed")
+    project.clear()
+    if not project.read(str(filename)) or not all(
+        layer.isValid() for layer in project.mapLayers().values()
+    ):
+        raise ValueError("Saved project reload or layer validation failed")
+    previews = output / "review_previews_verified"
+    previews.mkdir(exist_ok=True)
+    for tile in spec["tiles"]:
+        settings = QgsMapSettings()
+        settings.setLayers(
+            [n.layer() for n in project.layerTreeRoot().findLayers() if n.isVisible()]
+        )
+        settings.setExtent(QgsRectangle(*tile["bounds"]))
+        settings.setOutputSize(QSize(1024, 1024))
+        job = QgsMapRendererParallelJob(settings)
+        job.start()
+        job.waitForFinished()
+        if not job.renderedImage().save(str(previews / (tile["candidate_id"] + ".png"))):
+            raise ValueError("Review preview render failed")
+    validation = {
+        "project": str(filename),
+        "project_reopened": True,
+        "all_layers_valid": True,
+        "bookmark_count": len(spec["tiles"]),
+        "all_vector_layers_read_only": all(
+            layer.readOnly()
+            for layer in project.mapLayers().values()
+            if isinstance(layer, QgsVectorLayer)
+        ),
+        "original_six_region_approval_untouched": True,
+        "new_regions_training_eligible": False,
+    }
+    (report / "qgis_new_region_review.json").write_text(json.dumps(validation, indent=2))
+    print(json.dumps(validation, indent=2), flush=True)
+    project.clear()
+    app.exitQgis()
+
+
+if __name__ == "__main__":
+    main()

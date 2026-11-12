@@ -1,0 +1,88 @@
+# Phase 4 multi-level label taxonomy.
+#
+# Four levels are kept separate on purpose:
+#   1. visual_classes        - what Mask2Former segments from intensity pixels.
+#   2. instance identity     - one stable global ID per source GIS feature (not configured
+#                              here; derived from source file + layer + fid + ID_SIG).
+#   3. client codes          - final DESIGNACAO (1-14) or COD_RST written to the GPKG.
+#   4. context attributes    - POSICAO, ID_GRUPO, TRACO/ESPACO, LARGURA, COD_JAE ...
+#                              retained as metadata, never encoded as pixel classes.
+#
+# STATUS: PROVISIONAL. Mappings marked `to_confirm` or `ambiguous` are not invented;
+# features that hit them are flagged NEEDS_REVIEW. Confirm against the client catalog.
+
+version: phase4-taxonomy-v1
+provisional: true
+
+# Semantic IDs are what Mask2Former sees through instance_id_to_semantic_id.
+# 0 is background, 255 is ignore; both are dataset conventions, not model classes.
+background_id: 0
+ignore_id: 255
+visual_classes:
+  - {id: 1, name: longitudinal_solid, source_geometry: line}
+  - {id: 2, name: longitudinal_dash,  source_geometry: line}
+  - {id: 3, name: arrow,              source_geometry: polygon}
+  - {id: 4, name: detour_arrow,       source_geometry: polygon}
+  - {id: 5, name: diagonal_stripe,    source_geometry: polygon}
+  - {id: 6, name: give_way,           source_geometry: polygon}
+  - {id: 7, name: colour_band,        source_geometry: polygon}
+  - {id: 8, name: safety_marking,     source_geometry: polygon}
+  - {id: 9, name: character,          source_geometry: polygon}
+
+# Longitudinal: client DESIGNACAO text (Portuguese, as found in the GPKG) -> code 1-14.
+# visual_rule: "dash_if_traco" means longitudinal_dash when TRACO (dash length) is
+# present, otherwise longitudinal_solid. The pixel class never encodes the designation.
+longitudinal:
+  designation_field: DESIGNACAO
+  width_field: LARGURA
+  width_unit: m
+  designations:
+    "Linha contínua":                      {code: 1,  name: Solid line,              visual_rule: dash_if_traco}
+    "Linha descontínua":                   {code: 2,  name: Broken line,             visual_rule: dash_if_traco}
+    "Linha descontínua de aviso":          {code: 3,  name: Warning broken line,     visual_rule: dash_if_traco}
+    # LBM "mixed line" can be code 4 or 5; the catalog distinction is not in the data.
+    "Linha mista":                         {code: null, candidates: [4, 5], name: Solid and broken line (warning or not), visual_rule: dash_if_traco, ambiguous: true}
+    "Linha de abrandamento":               {code: 6,  name: Deceleration line,       visual_rule: dash_if_traco}
+    "Linha de aceleração":                 {code: 7,  name: Acceleration line,       visual_rule: dash_if_traco}
+    "Linha de interseção":                 {code: 8,  name: Intersection line,       visual_rule: dash_if_traco}
+    "Linha contínua na sequência de LBTg": {code: 9,  name: Solid line after LBTg,   visual_rule: dash_if_traco}
+    "Guia direita":                        {code: 13, name: Right edge line,         visual_rule: dash_if_traco}
+    "Guia esquerda":                       {code: 14, name: Left edge line,          visual_rule: dash_if_traco}
+  # Codes 10, 11, 12 have no confirmed Portuguese label in the delivered data.
+  unmapped_client_codes: [10, 11, 12]
+  context_attributes: [POSICAO, ID_GRUPO, TRAÇO, ESPAÇO, LARGURA, COD_JAE, ELEVATION, ID_HIST]
+
+# Other marks: COD_RST -> visual class. Category hints come from configs/classes.yaml and
+# are still to be confirmed against the client catalog.
+other_marks:
+  code_field: COD_RST
+  codes:
+    M15:  {visual: arrow,           to_confirm: true}
+    M15a: {visual: arrow,           to_confirm: true}
+    M15b: {visual: arrow,           to_confirm: true}
+    M15c: {visual: arrow,           to_confirm: true}
+    M15d: {visual: arrow,           to_confirm: true}
+    M15e: {visual: arrow,           to_confirm: true}
+    M15f: {visual: arrow,           to_confirm: true}
+    M16:  {visual: detour_arrow,    to_confirm: true}
+    M16a: {visual: detour_arrow,    to_confirm: true}
+    M16b: {visual: detour_arrow,    to_confirm: true}
+    M17:  {visual: diagonal_stripe, to_confirm: true}
+    M17a: {visual: diagonal_stripe, to_confirm: true}
+    M9a:  {visual: give_way,        to_confirm: true}
+    M20:  {visual: colour_band,     to_confirm: true}
+    M21:  {visual: safety_marking,  to_confirm: true}
+  # Letters/digits: LETRA or ALGARISMO populated -> character, grouped by ID_GRUPO.
+  character_fields: [LETRA, ALGARISMO]
+  missing_code_values: ["", "NULL", null]
+  context_attributes: [POSICAO, ID_GRUPO, LARGURA, ALTURA, AREA_PINTA, COD_JAE, ELEVATION, ID_HIST]
+
+# Pixel-label policy (see docs/phase4_dataset_preparation.md).
+label_policy:
+  # Without supplied reviewed-completeness regions no pixel becomes verified background.
+  completeness_regions: null
+  unobserved_outside_instances: ignore
+  boundary_band_ignore: true       # partially covered boundary pixels -> ignore
+  coverage_threshold: 0.5          # supersampled coverage needed to be an instance pixel
+  supersample: 4
+  allowed_qc_statuses: [VERIFIED]  # only these feature statuses produce instance masks

@@ -1,0 +1,55 @@
+version: phase5-swin-s-v1
+model:
+  checkpoint: facebook/mask2former-swin-small-coco-instance
+  revision: 1b7ac418a0f3cb5edfc5037e488d53587b8bb76b
+  use_safetensors: true
+  allow_weight_download_after_dataset_gate: true
+  training_classes: {0: longitudinal_solid, 1: longitudinal_dash}
+  license: other
+  commercial_rights_review: REQUIRED_BEFORE_REDISTRIBUTION_OR_DEPLOYMENT
+dataset:
+  root: null
+  annotation_store: null
+  taxonomy_version: phase4-verified-taxonomy-v1
+  resolution: 0.05
+  source_tile_size: 1024
+  overlap: 256
+  required_supervision: EVERY_PIXEL_VERIFIED_PAINT_OR_BACKGROUND
+  allow_unknown_or_nodata: false
+  spatial_guard_native_units: 10
+processor:
+  do_resize: false
+  do_rescale: true
+  rescale_factor: 0.00392156862745098
+  do_normalize: true
+  image_mean: [0.485, 0.456, 0.406]
+  image_std: [0.229, 0.224, 0.225]
+  ignore_index: 0
+  do_reduce_labels: false
+training:
+  seed: 895
+  crop_sizes_in_order: [1024, 512, 256]
+  resize: false
+  micro_batch_size: 1
+  gradient_accumulation: 4
+  optimizer: AdamW
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  scheduler: linear_with_warmup
+  warmup_steps: 20
+  max_epochs: 20
+  max_optimizer_steps: 5000
+  pilot_optimizer_steps: 8
+  early_stopping_validation_checks: 5
+  eval_every_optimizer_steps: 50
+  log_every_optimizer_steps: 1
+  mixed_precision: fp16
+  gradient_clip_norm: 1.0
+  dataloader_workers: 0
+  gradient_checkpointing: if_supported
+  backbone_freezing: false
+  output_root: models/mask2former_swin_s
+  device: cuda:0
+augmentation:
+  enabled: false
+  reason: Keep initial pilot deterministic; add joint image-mask augmentation only after approval.

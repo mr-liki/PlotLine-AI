@@ -1,0 +1,38 @@
+# Output GeoPackage layer schemas. Geometry must be 3D (Z coordinates preserved).
+# Field types are provisional where marked and must be checked against existing
+# client GPKG/SHP reference files (data/raw/reference_gis).
+
+layers:
+  longitudinal_marks:
+    geometry_type: LineStringZ
+    fields:
+      - {name: ID_SIG,     type: str,   required: true}
+      - {name: POSICAO,    type: str,   required: false}
+      - {name: DESIGNACAO, type: str,   required: true}
+      - {name: COD_JAE,    type: str,   required: false}
+      - {name: LARGURA,    type: float, required: false, unit: m}
+      - {name: TRAÇO,      type: float, required: false, unit: m}
+      - {name: ESPAÇO,     type: float, required: false, unit: m}
+      - {name: ID_GRUPO,   type: str,   required: false}
+      - {name: COMENTARIO, type: str,   required: false}
+      - {name: ID_HIST,    type: str,   required: false}
+      - {name: OBS,        type: str,   required: false}
+    provisional: true
+
+  other_marks:
+    geometry_type: PolygonZ
+    fields:
+      - {name: ID_SIG,       type: str,   required: true}
+      - {name: POSICAO,      type: str,   required: false}
+      - {name: COD_RST,      type: str,   required: true}
+      - {name: COD_JAE,      type: str,   required: false}
+      - {name: ALGARISMO,    type: str,   required: false}
+      - {name: LETRA,        type: str,   required: false}
+      - {name: LARGURA,      type: float, required: false, unit: m}
+      - {name: ALTURA,       type: float, required: false, unit: m}
+      - {name: AREA_PINTADA, type: float, required: false, unit: m2}
+      - {name: ID_GRUPO,     type: str,   required: false}
+      - {name: COMENTARIO,   type: str,   required: false}
+      - {name: ID_HIST,      type: str,   required: false}
+      - {name: OBS,          type: str,   required: false}
+    provisional: true

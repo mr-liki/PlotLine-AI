@@ -1,0 +1,10 @@
+# Pixel coordinates retain the original source grid; native units remain unconfirmed.
+resolution: 0.05
+tile_size: 1024
+overlap: 256
+context_size: 2048
+display_gamma: 0.7
+replicated_rgb: true
+gap_fill: false
+# All images reuse each source's existing full-file Phase 3 calibration (p1/p99.5
+# of geometry-candidate points across the whole source). No tile recalibration.

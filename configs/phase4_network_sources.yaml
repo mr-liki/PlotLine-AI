@@ -1,0 +1,19 @@
+# Active training scope: only the two shares reiterated by the user.
+annotation_root: '\\Nast\naksha\DAILY ACTIVITY REPORT\!!!!!geetha\2026\NT895\2026\Highway inventory project - A4\Road_marking'
+candidate_raw_roots:
+  - '\\192.168.10.82\nagendra\NAGENDRA\PROJECTS\NT_895\GIS\Asset project\2026\INPUTS\LAS'
+training_requested: true
+training_decision: KEEP_GATED_FOR_VALID_LABELS
+forced_fit_training_authorized: false
+source_restriction: USER_SUPPLIED_TWO_SHARES_ONLY
+pairing_status: NATIVE_FOOTPRINT_OVERLAP_AND_THREE_REGION_PIXEL_ALIGNMENT_CONFIRMED
+annotation_crs: EPSG:3763
+annotation_crs_evidence: Original DGN model-control GCS text and GeoPackage metadata
+coordinate_resolution_report: outputs/reports/phase4_coordinate_resolution/report.json
+annotation_reuse_manifest: outputs/reports/phase4_corrected_source_alignment/annotation_reuse_manifest.json
+active_alignment_report: outputs/reports/phase4_corrected_source_alignment/report.json
+coordinate_relationship: IDENTITY_NATIVE_XY_NO_TRANSFORM
+exclude_previous_forced_fit_copies: true
+coordinate_transform: null
+allow_training: false
+allow_source_modification: false
