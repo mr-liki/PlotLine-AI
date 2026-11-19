@@ -7,15 +7,23 @@ import numpy as np
 
 
 def iou_matrix(a, b, valid):
+    """IoU of every mask pair inside ``valid``. Pixel counts are computed as one matrix
+    product; counts stay exact integers (float32 is exact below 2**24 pixels per mask, float64
+    is used beyond), so the values equal the pixel-by-pixel definition."""
     a, b = np.asarray(a, bool), np.asarray(b, bool)
     result = np.zeros((len(a), len(b)), np.float64)
-    counts_a = np.array([(x & valid).sum() for x in a])
-    counts_b = np.array([(x & valid).sum() for x in b])
-    for i, first in enumerate(a):
-        for j, second in enumerate(b):
-            intersection = (first & second & valid).sum()
-            result[i, j] = intersection / max(1, counts_a[i] + counts_b[j] - intersection)
-    return result
+    if not len(a) or not len(b):
+        return result
+    valid = np.asarray(valid, bool)
+    av = (a & valid).reshape(len(a), -1)
+    bv = (b & valid).reshape(len(b), -1)
+    dtype = np.float32 if av.shape[1] < 2**24 else np.float64
+    fa, fb = av.astype(dtype), bv.astype(dtype)
+    inter = np.rint(fa @ fb.T).astype(np.int64)
+    counts_a = av.sum(1).astype(np.int64)
+    counts_b = bv.sum(1).astype(np.int64)
+    union = np.maximum(1, counts_a[:, None] + counts_b[None, :] - inter)
+    return inter / union
 
 
 def filter_instances(scores, labels, overlaps, qualities, config):

@@ -1,0 +1,110 @@
+# LOCKED: Plotline-AI application 2.0 (PlotLine plugin) - user approval 2026-11-15.
+version: '2.0'
+locked_utc: '2026-11-15'
+approved_by: user
+approval: '"currently PlotLine AI is a absolute beast, but its at 99%, still 1% mistakes, so lock the
+  current PlotLine AI, and consider this as further improvement fixes"'
+rule: 'Change these files only deliberately: bump APP_VERSION in pipeline.py, update the hashes here,
+  add a ''changes'' entry, and show on the baseline files that nothing got worse (scripts/check_reported_cases.py
+  + client comparisons against outputs/app_pilot/baseline_1.0).'
+also_locked:
+- configs/centerline_lock.yaml
+- configs/polygon_lock.yaml
+baseline_outputs: outputs/app_pilot/baseline_1.0
+baseline_metrics:
+  reported_cases: 33/33 pass
+  client_marks_digitized_dense_scan:
+    Track01_1: 124/125
+    Track01_4: 52/53
+    Track01_5: 4/5
+    Track01_8: 4/5
+  client_mark_iou_median:
+    Track01_1: 0.884
+    Track01_4: 0.891
+    Track01_5: 0.903
+    Track01_8: 0.95
+  client_line_length_covered_pct:
+    Track01_1: 92.57
+    Track01_4: 98.21
+    Track01_5: 98.93
+    Track01_6: 98.32
+    Track01_8: 99.13
+    Track01_11: 97.57
+  line_offset_to_paint_centre_median_cm:
+    Track01_4: 0.4
+    Track01_5: 0.5
+    Track01_6: 0.4
+    Track01_11: 0.4
+  tests: 509 passed, 3 skipped
+files:
+  src/roadmarking/app/pipeline.py: a7c9f5675c7333ff441a406aff063fde3d60122aaa5119859aa24ee633701838
+  src/roadmarking/app/centring.py: da6cc0699945944fcc47c4f12eb40023fd2dbbd0b1d734f0c9641aa7c54dece8
+  src/roadmarking/app/refine.py: 9dc1bcbd6178a2e3cd91baa089e3a11ec8958eefc4ab4ba4a8c4f7d0d5df7fb0
+  src/roadmarking/app/recover.py: f94b5ee4c17fcd6a0b43b693e2a5daa6d71536e032712232d0ba85116ad1f269
+  src/roadmarking/app/gui.py: d5b31b268e5d8faabc19552cec53d2f80eb47bd8d462e138110773fe7921ff3c
+  src/roadmarking/app/__main__.py: 3d214bc2a6c94ed2a682bb5b46d77a8fe9b86f5ef4bba350ed60e4d88ed8955a
+  scripts/check_reported_cases.py: ac0e56a7efe1824f85fa9f219c81d1b4c7c705a7c5499a72a8ef4e6cd5f58d3b
+  packaging/launch.pyw: 36eaabac648d421b641cfe706d1e47cf8be270c1060833d64c70c4eae9f75746
+  packaging/plotline_ai.iss: 9c74b74d5216ca96cee038914cb50c601cc6b49693432eb781033e73aa09bdeb
+  packaging/build_installer.bat: a8b8e732b543f98ba1d2b9cce020f886e4cbed93545e12f6e3cf0be4657529ad
+  src/roadmarking/app/host_pause.py: bfeeddc00fdeb6e612c3e05705b4c0610872f9cc2097316b222e570bc197b6dd
+  plugin/plugin.py: d459003315c19d1fc91b97d3f57c39b67e0937e7fe1457ffd6c438c69430b3b6
+  plugin/manifest.json: ac39d7301350987fe5fd782f3c3374e0c03368e621b53c9ae954e0b69cf66c60
+  plugin/icon.png: 3ccc32829ca9517d5d7927ad63da98d1b113e333d931e43266c33ef6959133e9
+  packaging/build_plugin.py: 910087c1d51a38470390fbadd42ac3f26805504a551eea5c2ac7de6c004b8b99
+changes:
+- version: '1.1'
+  date: '2026-11-15'
+  why: 'user review (Track01_1): at a junction two side-by-side stripes continued without merging, but
+    a line was joined across the gap between them; a thin piece of line paint was exported as a polygon'
+  change: centring.gap_crossings cuts a line where it runs over the dark gap between two painted stripes
+    (pieces repeating another line dropped); touches_line_paint drops thin strips parallel to and touching
+    a line (0 of 3248 client marks are like this)
+  check: 'vs baseline_1.0 on 6 files: client marks identical; line length off client lines 65.4->60.9
+    m (Track01_1), others equal or lower; client line coverage -0.07 pp on Track01_1 (about 4 m of short
+    bits where stripes touch), others within 0.03 pp; centring unchanged; reported cases 35/35; speed
+    unchanged (vectorised)'
+- version: '1.2'
+  date: '2026-11-15'
+  why: 'user review: closed polygons must outline the markings exactly (bar ends with spikes/notches,
+    split chevrons, scan gaps)'
+  change: refine.trace_paint_outline (outline traced from the mark's paint, fewest corners, edges snapped)
+    and prune_corners for marks without a client template; mark paint with unscanned gaps bridged (mark_paint_raster);
+    duplicate polygons of one mark merged
+  check: 'vs 1.1 on 6 files: client-mark IoU median Track01_1 0.884->0.900, Track01_4 0.891->0.912; max
+    outline deviation p90 66->38 cm and 58->41 cm; lines, missed marks, junk unchanged; reported cases
+    36/36; about 40 s slower per file'
+- version: '1.2'
+  date: '2026-11-15'
+  why: 'user: lock 1.2 and package it as an installable application'
+  change: 'Windows installer (Inno Setup 6, per-user, no admin): dist/Plotline-AI-1.2-Setup.exe + Setup-1.bin;
+    bundled Python runtime, locked code, accepted model, client reference marks, guide; packaging/launch.pyw
+    (environment + spawn-safe main guard)'
+  check: silent install to a test folder (4.5 min, 7.8 GB) - job on the pilot sample from the installed
+    copy identical to the development run (24 lines, 0.00 m different), GUI builds, output records version
+    1.2; silent uninstall removed folder and Apps entry
+- version: '2.0'
+  date: '2026-11-15'
+  why: 'user: package the approved app as an independent NakshaAI-LiDAR plugin named PlotLine (icon supplied),
+    version 2.0; Plotline-AI must get the full system resources and the host must pause while a job runs'
+  change: 'PlotLine plugin (plugin/, packaging/build_plugin.py -> dist/PlotLine-plugin-2.0.zip): ribbon
+    button with the supplied icon, starts Plotline-AI as its own process from the bundled runtime, nothing
+    of the host changed; host paused (process suspended) during a job and always resumed (watchdog) -
+    app/host_pause.py; recognition (GPU, 1-2 workers) and digitizing (CPU, cores/2 workers) in separate
+    process pools so host GPU memory no longer limits parallelism; Plotline-AI processes at above-normal
+    priority'
+  check: 'output identical to 1.2 on Track01_1 (0 difference, lines and polygons); plugin installed with
+    the host''s own PluginManager (9 min), icon applied, launch from the bundled runtime with --pause-pid,
+    watchdog running; job from the installed plugin: stand-in host paused 276/277 checks during the job,
+    resumed after; tests pass'
+installer:
+  plugin: dist/PlotLine-plugin-2.0.zip
+  standalone:
+  - dist/Plotline-AI-2.0-Setup.exe
+  - dist/Plotline-AI-2.0-Setup-1.bin
+  notes: dist/INSTALL.txt
+  build:
+  - packaging/build_plugin.py
+  - packaging/build_installer.bat
+  licence_note: Inno Setup 6.7 is free for non-commercial use only; commercial use needs an Inno Setup
+    licence (user confirmed)

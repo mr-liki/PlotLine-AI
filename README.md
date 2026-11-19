@@ -1,228 +1,162 @@
-# AI Road Marking Digitization
+# Plotline-AI
 
-> **Default model (2026-11-12): `v2_realistic_v1_fix_step0500`**, registered with hashes and a
-> one-line rollback in [configs/production_model.yaml](configs/production_model.yaml). Load it with
-> `roadmarking.models.production.load_production_model()`. Independent acceptance: V1 F1 solid
-> 0.923, dash 0.905 (previous model 0.794 / 0.846) on 56 unused real crops. Two classes only
-> (solid, dash); arrows, text and crossings are not recognised.
+**AI road-marking digitization from aerial LiDAR.**
+Plotline-AI takes a raw LiDAR point cloud (`.las` / `.laz`) and produces a single GeoPackage
+containing every painted road marking as accurate **3D vector geometry** (lane lines as
+polylines, arrows, hatching and other area marks as polygons), ready to load into any GIS.
 
-Automated detection, classification and 3D digitization of road markings from **aerial /
-drone LiDAR** point clouds, using **Mask2Former Swin-S** instance segmentation on
-LiDAR-intensity images plus geometric vectorization, with output to 3D GeoPackage.
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-CUDA-ee4c2c)
+![Model](https://img.shields.io/badge/model-Mask2Former%20Swin--S-6f42c1)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20NVIDIA%20GPU-0078d6)
+![Tests](https://img.shields.io/badge/tests-509%20passed-brightgreen)
 
-**Primary Phase 3 deliverable: [clean grayscale intensity images](docs/phase3_intensity_images.md).**
+---
 
-Phase 3.3 adds [native-grid model-input optimization](docs/phase3_3_model_input_optimization.md).
-Run `python scripts/run_phase3_3.py` for the raster-only 512/1024 comparison.
-The measured pilot retains 1024 source tiling; 512 increases workload on the current
-regions. Model performance and annotation alignment remain unverified.
-`python scripts/run_phase3.py` now exports road-focused images, wider context,
-replicated-grayscale RGB inputs and exact-overlap mosaics, with no overlays.
-The prior geometry workflow requires `--output-mode legacy`. See the
-[image-output report](outputs/reports/phase3_intensity_images/report.md).
+## Why
 
-> **Status: Phase 3 preprocessing implemented and executed on the two intact files.**
-> See [Phase 3 documentation](docs/phase3_preprocessing.md) and the
-> [measured delivery report](outputs/reports/phase3/phase3_report.md). Outputs retain
-> explicit geometric uncertainty; confirmed road areas and source/annotation coordinate
-> alignment are required before production Phase 4 annotation conversion.
-> No road-marking model training or segmentation has been performed.
+Road-asset inventories need every lane line, arrow and hatch bar drawn as GIS vectors.
+Doing that by hand from LiDAR is slow: an operator traces each stripe over an intensity
+image, then fixes the heights. Plotline-AI automates the whole chain, from point cloud to
+reviewed-quality 3D GeoPackage, in about **4 minutes for a 35-million-point file**.
 
-Phase 3.1 added an opt-in corridor refinement (`road_method="v2"`) that recovers mixed
-road/barrier/kerb edge cells point-by-point and reports per-cell evidence categories.
-Outputs are versioned under `data/processed/phase3_1/` and are unreviewed candidates. See
-[Phase 3.1 documentation](docs/phase3_1_road_corridor_correction.md) and the
-[Phase 3.1 report](outputs/reports/phase3_1/phase3_1_report.md).
+## Results
 
-The independent [alignment and cross-section rework](docs/phase3_1_topodot_inspired.md)
-separates the marking-search envelope from strict geometric surface candidates.
-Run `scripts/run_phase3_1_topodot_inspired.py --mode propose` for the controlled pilot;
-versioned results use `phase3_1_topodot_inspired/`. Automatic outputs remain provisional,
-and full processing is gated on road-boundary and paint-retention review.
+Measured against client hand-digitized data on held-out survey tracks:
 
-[Phase 3.2](docs/phase3_2_line_geometry_correction.md) diagnoses the old reference
-layers and adds finite evidence-based stripe tracking, explicit QA layers and
-shared-coordinate tile continuity. Run `scripts/run_phase3_2.py` for its controlled
-cached-point pilot; all new line products remain provisional until reviewed.
-
-The new [verified annotation workflow](docs/phase4_verified_annotations.md) prepares
-a native-XY QGIS project directly from Phase 3.3. Run
-`python scripts/prepare_annotation_project.py`; use the generated project to draw
-and explicitly review paint. Current delivery: **ANNOTATION REQUIRED**, with no
-real verified labels or training. Partial/NoData samples are excluded from stock
-Mask2Former training until loss-validity handling is resolved.
-
-Legacy Phase 4 tooling includes annotation QC, taxonomy, alignment gates, mask
-conversion and spatial splits. Its run **stopped at the alignment gate**: the delivered
-annotations (EPSG:3763, Y ≈ +170 km) do not overlap any LiDAR raster (no CRS,
-Y ≈ −90 km). No training labels were generated. See
-[Phase 4 documentation](docs/phase4_dataset_preparation.md) and the
-[Phase 4 report](outputs/reports/phase4/phase4_report.md).
-
-## 1. Project overview
-
-| | |
+| Metric | Result |
 |---|---|
-| Input | LAS/LAZ aerial LiDAR (XYZ + intensity, CRS from headers), existing 2D/3D polylines and polygons, GPKG/SHP reference files |
-| Output | 3D polylines (longitudinal marks), 3D polygons (other marks, with holes), client classification codes, GIS attributes, historical IDs, as 3D GeoPackage |
-| Priorities | Accuracy → throughput on large clouds → minimal manual work → efficient GPU use → reproducibility → modular, debuggable code |
+| Recognition F1, independent acceptance set (56 unseen crops) | **0.923** solid lines, **0.905** dashed lines (previous model: 0.794 / 0.846) |
+| Client line length covered | **92.6 – 99.1 %** per track |
+| Client area marks found (dense scans) | **124 / 125** on the largest track |
+| Area-mark shape match (median IoU) | **0.88 – 0.95** |
+| Line offset from painted-stripe centre (median) | **0.4 – 0.5 cm** |
+| Heights vs client 3D lines | within a few **millimetres** |
 
-## 2. Final architecture
+## How it works
 
 ```
-LAS/LAZ ─► 1 Input ─► 2 Preprocessing ─► 3 BEV intensity raster + tiles
-        (laspy/PDAL)  (road surface,     (georeferenced, overlapping,
-                       noise, intensity)  pixel↔world affine)
-                                               │
-   9 Export ◄─ 8 3D reconstruction ◄─ 7 GIS classification ◄─ 6 Vectorization ◄─ 5 Mask post-proc ◄─ 4 Mask2Former Swin-S
-  (GPKG, Z)   (Z from road points)   (codes, IDs, widths)   (centerlines /      (cleanup, tile       (instance masks
-                                                             polygons+holes)     merging)              + scores)
+ LAS / LAZ ─► Validate & read ─► Intensity raster ─► AI recognition ─► Digitize ─► 3D recovery ─► Self-check ─► GeoPackage
+ (1+ passes)  (streamed, CRS)    (georeferenced     (Mask2Former     (trace,      (Z from the     (13 QA        (Highway lines,
+                                  overlapping tiles)  Swin-S, GPU)     bridge gaps,  road surface)   checks)       Other Marks polygons,
+                                                                       fit polygons)                               run metadata)
 ```
 
-Model: `facebook/mask2former-swin-small-coco-instance` via Hugging Face
-`AutoImageProcessor` + `Mask2FormerForUniversalSegmentation`. See
-[docs/architecture.md](docs/architecture.md).
+1. **Read**: streams one or more overlapping survey passes (laspy / PDAL), checks CRS
+   consistency and corrupt LAZ chunks.
+2. **Rasterize**: builds calibrated bird's-eye-view intensity images on a georeferenced grid
+   with overlapping tiles, so every pixel maps back to world coordinates.
+3. **Recognize**: a fine-tuned **Mask2Former (Swin-Small)** instance-segmentation model finds
+   solid and dashed longitudinal markings. Tiles are stitched back into one consistent result.
+4. **Digitize**: traces lines along the paint, joins lines across gaps where vehicles hid the
+   road (and only there), splits dashes, and fits polygons to area marks (arrows,
+   chevrons, hatch bars, give-way frames), using client templates where they match.
+5. **Centre on paint**: every 25 cm the brightness profile across each line is measured, and
+   the line is moved to the midpoint of the stripe's edges, then smoothed.
+6. **Recover 3D**: heights are taken from the LiDAR road surface and only interpolated
+   between measured points, never beyond them.
+7. **Self-check**: 13 automatic checks (off-centre lines, ends running past the paint,
+   overlapping lines, polygons not covering paint, …) clean up or flag problems before export.
+8. **Export**: a validated 3D GeoPackage with the client's attribute schema, plus a metadata
+   table recording source files, model hash and SHA-256 checksums.
 
-## 3. Development environment (as installed and verified)
+## Output
 
-| Item | Value |
-|---|---|
-| OS | Windows 11 Pro (build 26300), x86-64 |
-| GPU | NVIDIA GeForce RTX 3050, 6 GB, compute 8.6, driver 610.88 |
-| Environment manager | micromamba 2.10.0 (user-level, `%USERPROFILE%\micromamba`) |
-| Environment | `roadmarking-ai`, Python 3.11.18 |
-| PyTorch | 2.14.1+cu130 (CUDA 13.0 runtime, cuDNN 9.24) |
-| Transformers | 5.22.1 |
+| Layer | Geometry | Content |
+|---|---|---|
+| `Highway` | MultiLineString Z | Lane lines on the paint axis. Solid lines are continuous; each dash is its own feature. |
+| `Other Marks` | MultiPolygon Z | Arrows, hatch bars, chevrons, colour bands, give-way and framed marks. |
+| `plotline_run_metadata` | table | Input files and hashes, model and hash, CRS, fields left for manual completion. |
 
-## 4. Required dependencies
+Every feature is marked as automatically digitized and pending review, so it fits a normal
+QA workflow.
 
-* **conda-forge** ([environment.yml](environment.yml)): Python, numpy, scipy, pandas, GDAL,
-  PDAL + python-pdal, laspy + lazrs, rasterio, geopandas, shapely, pyproj, pyogrio, affine,
-  scikit-image, pycocotools, pyarrow, and the dev tools.
-* **pip** ([requirements-ml.txt](requirements-ml.txt)): torch / torchvision (official CUDA
-  wheels), transformers, accelerate, safetensors, huggingface_hub, timm, einops,
-  opencv-python-headless, albumentations, datasets, torchmetrics, tensorboard.
-* [constraints-conda.txt](constraints-conda.txt) stops pip from replacing conda-built
-  binaries (numpy, pyarrow, …).
-* Exact versions: [environment.lock.txt](environment.lock.txt) (conda, explicit) and
-  [requirements-lock.txt](requirements-lock.txt) (pip freeze). Full table:
-  [docs/requirements.md](docs/requirements.md).
+## Desktop application
 
-## 5. Installation
+Plotline-AI ships as a Windows desktop app for GIS operators. No scripting is needed:
 
-Full steps for this machine: [docs/setup.md](docs/setup.md). Short version (PowerShell):
+1. **Browse** for a LAS/LAZ file (and optionally add overlapping passes of the same road,
+   which raised line coverage from 36–86 % to 96–100 % on review areas).
+2. **Save output as** a `.gpkg`.
+3. **Start processing** and follow the progress through each stage. The job can be cancelled
+   safely, and input files are never modified.
+
+It is distributed as a self-contained installer (bundled Python, CUDA PyTorch, GDAL, PDAL)
+that installs per user without admin rights, and as a plugin for a LiDAR viewer.
+See the [User Guide](docs/Plotline-AI_User_Guide.md).
+
+## Tech stack
+
+- **Deep learning**: PyTorch (CUDA), Hugging Face Transformers, Mask2Former Swin-S, timm, albumentations
+- **Point clouds & GIS**: laspy / lazrs, PDAL, GDAL, rasterio, GeoPandas, Shapely, pyproj
+- **Image & geometry processing**: NumPy, SciPy, scikit-image, OpenCV
+- **App & packaging**: Tkinter GUI, Inno Setup installer
+- **Quality**: pytest (500+ tests), ruff, black, hash-locked model registry and app baselines
+
+## Repository layout
+
+```
+src/roadmarking/
+  io/               LAS/LAZ and GIS readers/writers
+  preprocessing/    road-surface extraction, noise and intensity calibration
+  rasterization/    georeferenced intensity rasters and tiling
+  models/           Mask2Former wrapper and production model registry
+  training/         fine-tuning pipeline
+  inference/        tiled inference, calibration and stitching
+  digitization/     line tracing, gap bridging, polygon fitting, 3D surface, QA, export
+  app/              desktop pipeline, GUI, paint centring and refinement
+  gis/ evaluation/ quality/ ...
+src/plotline_ai/    application entry point (python -m plotline_ai)
+configs/            pipeline, model, class and GIS-schema configs, model registry, release locks
+scripts/            data preparation, training, evaluation and digitization tools
+tests/              pytest suite, including regression cases from field review
+packaging/          installer and plugin build scripts
+plugin/             LiDAR-viewer plugin
+docs/               user guide, architecture and per-phase design notes
+```
+
+## Getting started (developers)
+
+Requirements: Windows, Python 3.11, an NVIDIA GPU with a current driver, and
+[micromamba](https://mamba.readthedocs.io/) or conda.
 
 ```powershell
-$env:MAMBA_ROOT_PREFIX = "$env:USERPROFILE\micromamba"
-$mm = "$env:USERPROFILE\micromamba\micromamba.exe"
-& $mm create -y -f environment.yml
-& $mm run -n roadmarking-ai python -m pip install -r requirements-ml.txt -c constraints-conda.txt
-& $mm run -n roadmarking-ai python -m pip install -e . --no-deps
+micromamba create -y -f environment.yml
+micromamba run -n roadmarking-ai python -m pip install -r requirements-ml.txt -c constraints-conda.txt
+micromamba run -n roadmarking-ai python -m pip install -e . --no-deps
 ```
 
-## 6. Activating the environment
+Check the environment and GPU, then run the tests:
 
 ```powershell
-& "$env:USERPROFILE\micromamba\micromamba.exe" shell hook -s powershell | Out-String | Invoke-Expression
-micromamba activate roadmarking-ai
+micromamba run -n roadmarking-ai python -m roadmarking.healthcheck
+micromamba run -n roadmarking-ai python -m pytest
 ```
 
-Or prefix any command with `micromamba run -n roadmarking-ai`.
-
-## 7. GPU verification
+Run the app (`Launch_Plotline_AI.bat` does the same) or the command-line pipeline:
 
 ```powershell
-python scripts/check_environment.py
-python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+micromamba run -n roadmarking-ai python -m plotline_ai
+micromamba run -n roadmarking-ai python scripts/digitize.py --help
 ```
 
-GPU failure is reported as a failure; nothing silently falls back to CPU
-(`runtime.require_gpu: true`).
+> **Note:** the trained model weights and the survey data are not included in this
+> repository (client data, and weights are too large for git). The code, configuration and
+> tests are complete; to run inference you need your own fine-tuned checkpoint registered in
+> [`configs/production_model.yaml`](configs/production_model.yaml).
 
-## 8. Project structure
+More detail: [architecture](docs/architecture.md) ·
+[development notes and history](docs/development.md) · [setup](docs/setup.md) ·
+[training](docs/phase5_mask2former_training.md)
 
-```
-configs/            default.yaml, model.yaml, classes.yaml, gis_schema.yaml, paths.yaml
-data/raw/           pointclouds/, annotations/, reference_gis/   (git-ignored)
-data/               interim/, processed/, training/, validation/, test/
-src/roadmarking/    config, healthcheck, io/, preprocessing/, rasterization/, models/,
-                    training/, inference/, postprocessing/, vectorization/, gis/, utils/
-scripts/            check_environment.py, check_dependencies.py, smoke_test_model.py
-tests/              pytest suite
-checkpoints/ outputs/{masks,vectors,gpkg,reports}/ logs/ notebooks/ docs/
-```
+## Limitations
 
-## 9. Health checks
+- The recognition model knows two line classes (solid, dashed). Road text, pedestrian
+  crossings and stop lines are not produced yet.
+- Some client attribute fields (section codes, line subtypes) cannot be derived from the
+  point cloud and are left for manual completion.
+- Validated on one survey campaign; other sensors or regions may need additional fine-tuning.
 
-```powershell
-python -m roadmarking.healthcheck                 # offline checks
-python -m roadmarking.healthcheck --model-config  # + fetch model config.json (no weights)
-python scripts/check_dependencies.py              # versions + pip check
-python scripts/smoke_test_model.py --download     # downloads ~280 MB weights, forward pass
-```
+## Author
 
-## 10. Tests
-
-```powershell
-python -m pytest                       # whole suite
-python -m pytest --cov=roadmarking     # with coverage
-$env:ROADMARKING_RUN_NETWORK_TESTS="1"; python -m pytest -m network
-ruff check src tests scripts; black --check src tests scripts
-```
-
-## 11. Where to put client input data
-
-| Data | Location |
-|---|---|
-| LAS/LAZ point clouds | `data/raw/pointclouds/` |
-| Reference GPKG/SHP (existing digitization, historical IDs) | `data/raw/reference_gis/` |
-
-Everything under `data/` is git-ignored. To keep large data on another drive, set
-`ROADMARKING_DATA_ROOT` (see [.env.example](.env.example)); every path in
-`configs/paths.yaml` then resolves against it.
-
-## 12. Where to put training annotations
-
-Manually verified annotations (polylines/polygons or masks) go in `data/raw/annotations/`.
-They are converted into image/mask pairs under `data/training|validation|test/` in Phase 4.
-
-## 13. Known limitations
-
-* Strict streaming I/O, geometric candidate extraction, shared intensity calibration,
-  sparse rasterization and overlapping tiling are implemented. Later model/training and
-  vectorization stages remain interfaces. Geometry candidates require road-area review.
-* The COCO checkpoint does not detect road markings. Accuracy is unknown until fine-tuning.
-* **License:** the Hub model card lists license `other`. Verify the pretrained-weight
-  license and get commercial-use permission before deployment
-  (`model.yaml: license.verified_for_commercial_use: false`).
-* All processing parameters (CRS, GSD, tile size, thresholds, point density) are
-  **provisional** until real client data is inspected.
-* The class taxonomy and the meaning of each COD_RST code are provisional and must be
-  confirmed against the client catalog.
-* 6 GB VRAM limits training batch size and resolution. Expect gradient accumulation,
-  mixed precision and modest tile sizes.
-* Hugging Face cache symlinks are off on this Windows account (no Developer Mode), so
-  cached files take some extra disk space. This is harmless.
-* Synthetic LAS/GPKG tests only show that the libraries work, not that the real aerial-LiDAR
-  workflow does.
-
-## 14. Next phase
-
-Phase 2 (LiDAR inspection) results: [docs/phase2_lidar_inspection.md](docs/phase2_lidar_inspection.md).
-Regenerate the data reports with:
-
-```powershell
-micromamba run -n roadmarking-ai python scripts/inspect_lidar.py stats --force
-micromamba run -n roadmarking-ai python scripts/inspect_lidar.py report
-```
-
-Phase 3 has now been executed on `Track01_3` and `Track01_8` only. The damaged files
-remain excluded. Reproduce the bounded representative run and complete runs with:
-
-```powershell
-micromamba run -n roadmarking-ai python scripts/run_phase3.py --smoke --previews
-micromamba run -n roadmarking-ai python scripts/run_phase3.py --previews --skip-validated
-```
-
-Next: **Phase 4 - annotation conversion and alignment**, after road candidate review
-and coordinate alignment confirmation. See [docs/phase3_preprocessing.md](docs/phase3_preprocessing.md).
+Built by [@mr-liki](https://github.com/mr-liki).

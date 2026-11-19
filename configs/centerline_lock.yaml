@@ -1,0 +1,25 @@
+# LOCKED: longitudinal centerline digitization (user approval 2026-11-14 after QGIS review).
+# Any change to these files must be deliberate: update the hash here in the same change and
+# re-run scripts/dev_trace_eval.py --stage trace on outputs/digitization/review_regions_20261114_multi.json.
+# tests/test_centerline_lock.py fails when a locked file differs from its recorded hash.
+locked_utc: '2026-11-14'
+approved_by: user ("lock the centerlines digitization part, its perfect")
+reference_review: outputs/digitization/REVIEW_SET_20261114.md
+reference_metrics:  # found share of client line length on scanned ground (solid / dash)
+  pilot: [1.00, 1.00]
+  review1_left: [0.84, 0.95]
+  review2_interchange_curve: [0.96, 0.99]
+  review3_junction_markings: [0.97, 1.00]
+  review4_right: [0.93, 0.95]
+  review5_left_curve: [0.88, 1.00]
+updated_utc: '2026-11-14'  # junction joins + second pass; stages.py: preloaded model, faster deck test (identical results)
+files:  # sha256 with LF line endings
+  src/roadmarking/digitization/line_tracing.py: f425eaf6ae2c157d71a8cfeee4f9b9fffb954b5cd9f97cf0342e5f1327f1aaf4
+  src/roadmarking/digitization/stages.py: 059522d964ca7367681b6ebbdf939a6f104fc556093cb7611b385175a98dc157
+  src/roadmarking/digitization/raster_tiles.py: 027f24688e22a6b8c56a79925a33232cd8de17382acd8d005a5953f8ba27e140
+  src/roadmarking/digitization/centerline.py: 324c8123da63e532324d71b3d7715248d858f9ea73822403a81f2b11c3b2de84
+  src/roadmarking/digitization/fragments.py: a5c78f736d74d1b4b813723454354ed41d8e32e6df409433c76d8244fd08eb18
+  src/roadmarking/digitization/gap_bridging.py: b42355cc900efea4557e00898f60c55f7bc55b0c3dde390447f979aa59d6ab6d
+  src/roadmarking/digitization/surface.py: 79be74789e61c0a705acf0491085fabcf4e738bebe3dfe9de8c2f2d59423c65f
+  src/roadmarking/digitization/recognition.py: 653b1db04cfe543382fda0e4cc8b95a56af92814d18215d503e326173c99f550
+  src/roadmarking/digitization/junctions.py: 5933e510cb95519b4444214bc8f8b3c20960499d7c00401a69b67eae620c1c81

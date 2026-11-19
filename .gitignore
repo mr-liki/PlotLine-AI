@@ -71,3 +71,7 @@ models/**
 research_notes/
 reports/
 outputs/pytest*/
+
+# Local scratch
+outputs/ptd*/
+*.lnk

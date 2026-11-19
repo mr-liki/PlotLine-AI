@@ -20,7 +20,7 @@ roadmarking-healthcheck = "roadmarking.healthcheck:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-roadmarking = ["py.typed"]
+roadmarking = ["py.typed", "app/assets/*"]
 
 [tool.black]
 line-length = 100

@@ -1,0 +1,9 @@
+{
+  "name": "PlotLine",
+  "version": "2.0",
+  "entry": "plugin.py",
+  "class": "PlotLinePlugin",
+  "author": "Plotline-AI",
+  "description": "Plotline-AI 2.0 - automatic LiDAR road-marking digitization (LAS/LAZ to a 3D GeoPackage: Highway lines and Other Marks polygons, client schema, EPSG:3763). Runs as its own program with a bundled Python runtime and the accepted AI model; nothing is loaded into NakshaAI-LiDAR. While a job runs, NakshaAI-LiDAR is paused so Plotline-AI has the full CPU and GPU; it resumes automatically when the job ends. Requires an NVIDIA GPU.",
+  "tags": ["Road markings", "Digitization", "LiDAR", "AI", "GeoPackage"]
+}

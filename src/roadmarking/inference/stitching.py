@@ -151,12 +151,38 @@ def stitch(
     ]
     # ---- dash duplicates: keep the most central copy
     dashes = [i for i in range(n) if classes[i] == 1]
+    # Bounding box, area and centroid of each dash, computed once inside its own crop window
+    # (a stitched mask is clipped to its crop). Pairs whose boxes do not overlap cannot share
+    # a pixel; overlapping pairs are compared inside the box overlap only.
+    info = {}
+    for i in dashes:
+        r, c, r1, c1 = _window_box(windows[crop_ids[i]])
+        sub = masks[i][r:r1, c:c1]
+        ys, xs = np.nonzero(sub)
+        if len(ys) != np.count_nonzero(masks[i]):  # mask not inside its window: whole raster
+            ys, xs = np.nonzero(masks[i])
+            r = c = 0
+        info[i] = dict(
+            box=(
+                (ys.min() + r, xs.min() + c, ys.max() + r + 1, xs.max() + c + 1)
+                if len(ys)
+                else (0, 0, 0, 0)
+            ),
+            area=len(ys),
+            centre=(ys.mean() + r, xs.mean() + c) if len(ys) else (np.nan, np.nan),
+        )
 
     def centrality(i):
-        ys, xs = np.nonzero(masks[i])
         r, c, r1, c1 = _window_box(windows[crop_ids[i]])
-        cy, cx = ys.mean(), xs.mean()
+        cy, cx = info[i]["centre"]
         return min(cy - r, r1 - cy, cx - c, c1 - cx)
+
+    def overlap(i, j):
+        a, b = info[i]["box"], info[j]["box"]
+        r0, c0, r1, c1 = max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3])
+        if r1 <= r0 or c1 <= c0:
+            return 0
+        return int((masks[i][r0:r1, c0:c1] & masks[j][r0:r1, c0:c1]).sum())
 
     removed = set()
     for i in sorted(dashes, key=lambda k: -centrality(k)):
@@ -165,8 +191,8 @@ def stitch(
         for j in dashes:
             if j == i or j in removed or crop_ids[j] == crop_ids[i]:
                 continue
-            inter = int((masks[i] & masks[j]).sum())
-            if inter and inter / min(masks[i].sum(), masks[j].sum()) >= dash_ios:
+            inter = overlap(i, j)
+            if inter and inter / min(info[i]["area"], info[j]["area"]) >= dash_ios:
                 removed.add(j)
     dash_out = [
         {"members": [i], "class": 1, "mask": masks[i], "score": float(scores[i])}

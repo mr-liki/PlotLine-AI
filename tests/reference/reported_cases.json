@@ -1,0 +1,376 @@
+{
+ "about": "Places the user reported in review (screenshots), with what must or must not be in the output there. Re-check every new build with scripts/check_reported_cases.py on fresh outputs of these files. Coordinates: EPSG:3763 metres.",
+ "kinds": {
+  "line_at": "a Highway line passes within r of the point",
+  "no_line_at": "no Highway line passes within r of the point",
+  "no_polygon_at": "no Other Marks polygon lies within r of the point",
+  "polygon_at": "an Other Marks polygon lies within r of the point",
+  "client_iou_at": "our polygon at the point overlaps the client's mark there with IoU >= min"
+ },
+ "cases": [
+  {
+   "file": "Job_20250708_0834_Track02_1",
+   "round": "2026-11-14 occlusion",
+   "kind": "line_at",
+   "x": 4699.6,
+   "y": 176896.1,
+   "r": 0.3,
+   "what": "continuous line joined across a vehicle-hidden gap at a block border"
+  },
+  {
+   "file": "Job_20250708_0834_Track02_1",
+   "round": "2026-11-14 occlusion",
+   "kind": "line_at",
+   "x": 4515.9,
+   "y": 176740.1,
+   "r": 0.3,
+   "what": "continuous line joined across a vehicle-hidden gap"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "no_line_at",
+   "x": -31068.2,
+   "y": 169809.3,
+   "r": 0.3,
+   "what": "no line traced across hatch bars"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "no_line_at",
+   "x": -30998.3,
+   "y": 169810.9,
+   "r": 0.2,
+   "what": "solid line must end at its paint (-30999.6), not run on"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "no_polygon_at",
+   "x": -31270.4,
+   "y": 169813.9,
+   "r": 0.5,
+   "what": "no 'mark' on verge speckle beyond the edge line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "polygon_at",
+   "x": -31062.5,
+   "y": 169811.1,
+   "r": 0.3,
+   "what": "each chevron of the hatch zone is its own polygon"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "line_at",
+   "x": -31647.0,
+   "y": 169891.4,
+   "r": 0.1,
+   "what": "real dashed line (client) must stay"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_4",
+   "round": "2026-11-14 hatch",
+   "kind": "line_at",
+   "x": -31671.4,
+   "y": 169904.1,
+   "r": 0.1,
+   "what": "real dashed line (client) must stay"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 dash-beside-line",
+   "kind": "no_polygon_at",
+   "x": -30902.8,
+   "y": 169808.2,
+   "r": 0.3,
+   "what": "dash beside the continuous line is a line, not a polygon"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 dash-beside-line",
+   "kind": "line_at",
+   "x": -30903.0,
+   "y": 169808.37,
+   "r": 0.12,
+   "what": "the dash beside the continuous line has its own centerline"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 missing",
+   "kind": "line_at",
+   "x": -29347.2,
+   "y": 169339.0,
+   "r": 0.2,
+   "what": "edge line in the sparse far part of the scan"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 missing",
+   "kind": "line_at",
+   "x": -29288.7,
+   "y": 169256.1,
+   "r": 0.2,
+   "what": "edge line in the sparse far part of the scan"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 missing",
+   "kind": "line_at",
+   "x": -29455.7,
+   "y": 169493.1,
+   "r": 0.2,
+   "what": "edge line in the sparse far part of the scan"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 junk",
+   "kind": "no_polygon_at",
+   "x": -29380.1,
+   "y": 169365.3,
+   "r": 0.5,
+   "what": "no 'mark' on verge speckle beyond the edge line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 junk",
+   "kind": "no_polygon_at",
+   "x": -29374.5,
+   "y": 169357.4,
+   "r": 0.5,
+   "what": "no 'mark' on verge speckle beyond the edge line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 marks-near-lines",
+   "kind": "no_polygon_at",
+   "x": -29313.6,
+   "y": 169274.4,
+   "r": 0.05,
+   "what": "arrow next to the edge line must not cover the line's paint"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 marks-near-lines",
+   "kind": "no_polygon_at",
+   "x": -29361.7,
+   "y": 169341.9,
+   "r": 0.05,
+   "what": "arrow next to the edge line must not cover the line's paint"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 marks-near-lines",
+   "kind": "no_line_at",
+   "x": -29312.3,
+   "y": 169273.5,
+   "r": 0.1,
+   "what": "no short line traced inside the arrow / joined to the edge line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-14 marks-near-lines",
+   "kind": "polygon_at",
+   "x": -29310.5,
+   "y": 169272.6,
+   "r": 0.2,
+   "what": "the arrow itself stays"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-15 recovery check",
+   "kind": "no_line_at",
+   "x": -29310.6,
+   "y": 169274.8,
+   "r": 0.1,
+   "what": "dashed line not joined into a continuous line across visible gaps"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-15 recovery check",
+   "kind": "no_line_at",
+   "x": -29338.8,
+   "y": 169307.1,
+   "r": 0.3,
+   "what": "no line on shoulder texture beyond the edge line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 lines-in-marks",
+   "kind": "no_line_at",
+   "x": -24481.57,
+   "y": 167194.53,
+   "r": 0.1,
+   "what": "no centerline traced along the border paint of a give-way frame"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 lines-in-marks",
+   "kind": "no_line_at",
+   "x": -24481.3,
+   "y": 167194.07,
+   "r": 0.1,
+   "what": "no centerline traced along the border paint of a give-way frame"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 lines-in-marks",
+   "kind": "polygon_at",
+   "x": -24479.6,
+   "y": 167195.4,
+   "r": 0.6,
+   "what": "the give-way frame itself stays (point is the frame's empty middle)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 polygon-fit",
+   "kind": "polygon_at",
+   "x": -24676.8,
+   "y": 167104.8,
+   "r": 0.1,
+   "what": "the lane-change arrow stays (fit to paint)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 polygon-outline",
+   "kind": "client_iou_at",
+   "x": -24676.8,
+   "y": 167104.8,
+   "r": 0.2,
+   "min": 0.94,
+   "what": "lane-change arrow outline follows its paint incl. inner corner (IoU with client >= 0.94)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 frame-format",
+   "kind": "client_iou_at",
+   "x": -24479.7,
+   "y": 167195.2,
+   "r": 0.1,
+   "min": 0.9,
+   "what": "give-way frame exported like the client (outer + inner solid polygons), outline IoU >= 0.9"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_5",
+   "round": "2026-11-15 arrow-outline",
+   "kind": "client_iou_at",
+   "x": -29359.5,
+   "y": 169341.2,
+   "r": 0.2,
+   "min": 0.88,
+   "what": "arrow touching the edge line gets the client arrow shape with its barb (IoU >= 0.88)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "2026-11-15 missed-chevrons",
+   "kind": "polygon_at",
+   "x": -37608.1,
+   "y": 170088.4,
+   "r": 0.3,
+   "what": "V-shaped chevron digitized (concave solid mark, not discarded as a failed frame)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "2026-11-15 missed-chevrons",
+   "kind": "polygon_at",
+   "x": -37606.0,
+   "y": 170088.9,
+   "r": 0.3,
+   "what": "V-shaped chevron digitized (concave solid mark, not discarded as a failed frame)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "2026-11-15 missed-chevrons",
+   "kind": "polygon_at",
+   "x": -37603.9,
+   "y": 170089.3,
+   "r": 0.3,
+   "what": "V-shaped chevron digitized (concave solid mark, not discarded as a failed frame)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "2026-11-15 missed-chevrons",
+   "kind": "polygon_at",
+   "x": -37601.7,
+   "y": 170089.7,
+   "r": 0.3,
+   "what": "V-shaped chevron digitized (concave solid mark, not discarded as a failed frame)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_8",
+   "round": "2026-11-15 faint-arrow",
+   "kind": "polygon_at",
+   "x": -24592.6,
+   "y": 167138.0,
+   "r": 0.3,
+   "what": "faint arrow matching a client shape is kept (not dropped as speckle)"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "1.1 side-by-side stripes",
+   "kind": "no_line_at",
+   "x": -37686.3,
+   "y": 170069.8,
+   "r": 0.05,
+   "what": "no line crossing the gap between two side-by-side stripes that do not merge"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "1.1 side-by-side stripes",
+   "kind": "no_line_at",
+   "x": -37669.6,
+   "y": 170074.1,
+   "r": 0.05,
+   "what": "no line crossing the gap between two side-by-side stripes that do not merge"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_1",
+   "round": "1.2 exact outlines",
+   "kind": "client_iou_at",
+   "x": -37474.2,
+   "y": 170108.1,
+   "r": 0.2,
+   "min": 0.88,
+   "what": "hatch bar outlined as a clean 4-corner shape on its paint (no spike at the end), IoU with client >= 0.88"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_6",
+   "round": "2026-11-16 faded paint",
+   "kind": "line_at",
+   "x": -27099.589,
+   "y": 168596.163,
+   "r": 0.03,
+   "what": "line on the centre of faded wide paint seen in scan-line columns (2.0 ran 10-15 cm off along the paint edge); point = LiDAR paint centre, not the client line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_6",
+   "round": "2026-11-16 faded paint",
+   "kind": "line_at",
+   "x": -27100.541,
+   "y": 168595.858,
+   "r": 0.03,
+   "what": "line on the centre of faded wide paint seen in scan-line columns (2.0 ran 10-15 cm off along the paint edge); point = LiDAR paint centre, not the client line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_6",
+   "round": "2026-11-16 faded paint",
+   "kind": "line_at",
+   "x": -27101.539,
+   "y": 168593.848,
+   "r": 0.03,
+   "what": "line on the centre of faded wide paint seen in scan-line columns (2.0 ran 10-15 cm off along the paint edge); point = LiDAR paint centre, not the client line"
+  },
+  {
+   "file": "Job_20250708_0834_Track01_13",
+   "round": "2026-11-16 faded paint",
+   "kind": "no_line_at",
+   "x": -17046.0,
+   "y": 169980.3,
+   "r": 0.3,
+   "what": "no line along a roadside barrier base (wide light band, darker road on one side only)"
+  }
+ ]
+}

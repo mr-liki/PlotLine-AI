@@ -1,0 +1,23 @@
+# LOCKED: closed-polygon digitization of other markings (user approval 2026-11-14 after QGIS
+# review: "lock the current closed polygon part in digitization, as its working correct").
+# Change these files only deliberately: update the hash here in the same change and re-run
+# scripts/dev_other_eval.py on outputs/digitization/review_regions_20261114_multi.json.
+locked_utc: '2026-11-14'
+approved_by: user
+reference_review: outputs/digitization/REVIEW_SET_20261114_polygons.md
+files:  # sha256 with LF line endings
+  src/roadmarking/digitization/other_marks.py: aeb67a4cf3af800518d03fcdd3a152ce84407e2fe48cc4ddb743cf2dcb045826
+  src/roadmarking/digitization/polygon_fit.py: 458805f7eeefd9dc78d95ed390aa639dc549ceace110155d32d84f74529ab05e
+changes:
+  - date: '2026-11-14'
+    why: user review - hatch bars touching each other or an untraced border were exported as one
+      outline around the zone; now split into one polygon per bar (split_touching_bars,
+      is_true_outline)
+    check: dev_other_eval.py on review_regions_20261114_multi.json identical to the locked
+      baseline (all 6 regions, same predictions and matches)
+  - date: '2026-11-15'
+    why: user review - V-shaped chevrons (concave, solidity < 0.45) were discarded when their
+      border was not painted all round (not an outline mark); now fitted as solid marks with
+      the same paint-density test
+    check: dev_other_eval.py on review_regions_20261114_multi.json - matched marks identical in
+      all 6 regions; full-file checks in the app report
